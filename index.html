@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <div class="calc-body">
+            
+          <div class="calc-screen">
+            <div class="calc-typed">
+             
+                <input class="calc-typed"  name="screen" id="result"></input>
+            </div>
+          <div class="calc-button-row">
+          
+            <button class="button c" value="+" onClick="display('+')" >+</button>
+            <button class="button l" value="-" onClick="display('-')">-</button>
+            <button class="button l" value="*" onClick="display('*')">x</button>
+            <button class="button l" value="/" onClick="display('/')">/</button>
+          </div>
+          <div class="main">
+          <div class="left">
+          <div class="calc-button-row">
+            <button class="button" value="7" onClick="display('7')">7</button>
+            <button class="button" value="8" onClick="display('8')">8</button>
+            <button class="button" value="9" onClick="display('9')">9</button>
+         
+          </div>
+          <div class="calc-button-row">
+            <button class="button" value="4" onClick="display('4')">4</button>
+            <button class="button" value="5" onClick="display('5')">5</button>
+            <button class="button" value="6" onClick="display('6')">6</button>
+           
+          </div>
+          <div class="calc-button-row">
+            <button class="button" value="1" onClick="display('1')">1</button>
+            <button class="button" value="2" onClick="display('2')">2</button>
+            <button class="button" value="3" onClick="display('3')">3</button>
+          
+          </div>
+          <div class="calc-button-row">
+            <button class="button" value="0" onClick="display('0')">0</button>
+            <button class="button" value="."  onClick="display('.')">.</button>
+            <button class="button"   value = 'C' onclick="clearScreen()">c</button>
+            
+        </div>
+    </div>
+        <div class="right calc-button-row">
+        </div>
+          <button type="button" value= "=" class="button le" onClick="solve()">=</button>
+      </div>
+    </div>
+    </div>
+    <script>
+        function display(val){
+
+    document.getElementById('result').value += val
+return val
+
+   
+
+}
+
+function solve(){
+
+    let x = document.getElementById('result').value
+
+    let y = eval(x);
+
+    document.getElementById('result').value = y
+
+   
+if(y ==null){
+    
+    var log= alert("enter any value");
+    return log
+
+}
+else{
+     return y
+}
+
+}
+
+function clearScreen(){
+
+    document.getElementById('result').value = ''
+
+}
+    </script>
+</body>
+</html>
