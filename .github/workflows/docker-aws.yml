@@ -1,0 +1,33 @@
+
+name: Deploy sancal with ec2
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["master"]
+
+jobs:
+  # Build job
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: login to docker hub
+        run: docker login -u ${{secrets.AWS_USERNAME}} -p ${{secrets.AWS_PASSWORD}}
+      - name: Build docker image
+        run: docker build -t staticsancal
+      - name: Publish image to docker hub
+        run: docker push staticsancal:latest 
+       
+  # Deployment job
+  deploy:
+   needs: build
+   runs-on: [ec2-aws]
+   steps:
+    - name: Pull image from docker hub
+      run: docker pull staticsancal:latest
+    - name: Delete old container
+      run: docker rm -f sancal
+    - name: Run docker container
+      run:  docker run -d -p 8000:8000 --name sancal staticsancal 
