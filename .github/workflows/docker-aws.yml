@@ -1,33 +1,52 @@
-
-name: Deploy sancal with ec2
-
+name: Deploy to AWS
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["master"]
+    branches:
+      - "main"
+env:
+  AWS_REGION: ap-south-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  PRIVATE_SSH_KEY: ${{ secrets.AWS_SSH_KEY }}
+  SERVER_PUBLIC_IP: ${{ secrets.AWS_PUBLIC_KEY }}
 
 jobs:
-  # Build job
-  build:
-    runs-on: [ubuntu-latest]
+  deploy:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: login to docker hub
-        run: docker login -u ${{secrets.AWS_USERNAME}} -p ${{secrets.AWS_PASSWORD}}
-      - name: Build docker image
-        run: docker build -t staticsancal
-      - name: Publish image to docker hub
-        run: docker push staticsancal:latest 
-       
-  # Deployment job
-  deploy:
-   needs: build
-   runs-on: [ec2-aws]
-   steps:
-    - name: Pull image from docker hub
-      run: docker pull staticsancal:latest
-    - name: Delete old container
-      run: docker rm -f sancal
-    - name: Run docker container
-      run:  docker run -d -p 8000:8000 --name sancal staticsancal 
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build, push docker image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: jac-website
+          IMAGE_TAG: ${{ github.sha }}
+        run: |-
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      - name: Deploy docker image to EC2
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: jac-website
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_DEFAULT_REGION: ap-south-1
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ env.PRIVATE_SSH_KEY }}
+          envs: PRIVATE_SSH_KEY,REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,AWS_REGION
+          script: |-
+            sudo apt update
+            sudo apt install docker.io -y
+            sudo apt install awscli -y
+            sudo $(aws ecr get-login --no-include-email --region ap-south-1);
+            sudo docker stop myappcontainer || true
+            sudo docker rm myappcontainer || true
+            sudo docker pull $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            sudo docker run -d --name myappcontainer -p 80:80 $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+    
